@@ -55,10 +55,3 @@ params.nu = xopt(3);
 params.RW0 = RW0;
 
 disp('Parameter estimation complete')
-
-
-
-
-
-
-

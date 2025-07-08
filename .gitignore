@@ -9,5 +9,4 @@
 .sbatch
 *.txt
 *.csv
-*.xlsx
 *.zip
