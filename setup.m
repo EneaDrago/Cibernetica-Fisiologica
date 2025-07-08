@@ -10,7 +10,17 @@ params.region = regionName;
 dataFile = ['./data/' params.region '.xlsx'];
 
 %Population
-params.N = 240000;
+if regionName == 'wwtp1'
+    params.N = 42931;
+elseif regionName == 'wwtp2'
+    params.N = 68070;
+elseif regionName == 'wwtp3'
+    params.N = 110871;
+elseif regionName == 'wwtp4'
+    params.N = 60262;
+else
+    params.N = 240000;
+end
 
 %The average ratio of total and detected cases. If there are considerable
 %jumps expected, different values can be used for different time periods.

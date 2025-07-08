@@ -4,10 +4,10 @@ clc
 
 %Load the data and parameters
 % regionName = 'Luxembourg';
-% regionName = 'wwtp1';
+regionName = 'wwtp1';
 % regionName = 'wwtp2';
 % regionName = 'wwtp3';
-regionName = 'wwtp4';
+% regionName = 'wwtp4';
 % regionName = 'wwtpTOT';
 
 paramFile = fullfile('parameters', ['params_' regionName '.mat']);

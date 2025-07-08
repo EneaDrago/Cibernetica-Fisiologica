@@ -1,4 +1,5 @@
 function params = SEIRWWcalibrate(YC,YW,C,params)
+% Parameter estimation
 
 %Rate E -> I
 params.alpha = .4433;
