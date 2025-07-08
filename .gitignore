@@ -1,0 +1,13 @@
+.tmp
+*.log
+*.out
+*.eps
+*.fig
+*.mat
+.DS_Store
+*.m~
+.sbatch
+*.txt
+*.csv
+*.xlsx
+*.zip
