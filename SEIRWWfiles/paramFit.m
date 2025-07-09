@@ -1,4 +1,3 @@
-
 function [Js, nu, RW0] = paramFit(params,YC,YW,C,gs,es,ns)
 
 %Set parameters
@@ -21,7 +20,7 @@ else
     
     %Find nu
     params.nu = 1;
-    Yest = SEIR_WW(params,YC,YW,C,[true,false],1000);
+    Yest = SEIR_WW(params,YC,YW,C,[true,false],1e10); % we set the number of days to be used for this calibration equal to 1e10. That's because SEIR_WW uses the min between the number of days and the length of the vecotr YC --> in our case, we just want to fit the parameters in the first ~150 days, so we pass a truncated vector f
     WWinds = find(YW > -.5);
     Y2 = 1e-5*YW(WWinds).^es;
     YCaux = sort(YC,'ascend');
@@ -40,7 +39,7 @@ else
 
 end
 
-Yest = SEIR_WW(params,YC,YW,C,[false, true],1000);
+Yest = SEIR_WW(params,YC,YW,C,[false, true],1e10);
 Js = norm(Yest(1,:)-YC)^2; 
 
 nu = params.nu;

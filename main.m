@@ -12,6 +12,8 @@ regionName = 'wwtp1';
 
 paramFile = fullfile('parameters', ['params_' regionName '.mat']);
 
+select_dark_num(regionName)
+%%
 if ~exist(paramFile, 'file')
     fprintf('File %s non trovato. Lancio setup...\n', paramFile);
     setup(regionName);
@@ -36,6 +38,18 @@ YW = TT.ww';
 %indices if needed.
 [C, labs, firsts, longDates] = SEIRWWinit(YC, startDate, specialHolidays, params.darkNumber);
 
+%% Determine open-loop
+params.RW = params.RW0/10;
+[Yest_case, ~, ~, ReffCase, ~] = SEIR_WW(params,YC,YW,C,[false,false],1000,firsts,labs,true,regionName);
+
+figure 
+plot(YC)
+hold on
+plot(Yest_case(1,:))
+figure
+plot(YW)
+hold on
+plot(Yest_case(2,:))
 %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% 
 %
 %   SECTIONS BELOW CAN BE RUN ONE-BY-ONE
@@ -179,9 +193,9 @@ matlab2tikz(fileName, ...
 %% Project forward in time predizione prima
 
 %At what date is the forward prediction done
-numEstDays = 330;
+numEstDays = 250;
 predDay = length(YC)-numEstDays+1;
-numEstDays = 330;
+numEstDays = 250;
 
 %Use case/WW data or both
 dataToUse = [true, false];
