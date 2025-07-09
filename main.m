@@ -12,7 +12,7 @@ regionName = 'wwtp1';
 
 paramFile = fullfile('parameters', ['params_' regionName '.mat']);
 
-select_dark_num(regionName)
+% select_dark_num(regionName)
 %%
 if ~exist(paramFile, 'file')
     fprintf('File %s non trovato. Lancio setup...\n', paramFile);
@@ -41,15 +41,6 @@ YW = TT.ww';
 %% Determine open-loop
 params.RW = params.RW0/10;
 [Yest_case, ~, ~, ReffCase, ~] = SEIR_WW(params,YC,YW,C,[false,false],1000,firsts,labs,true,regionName);
-
-figure 
-plot(YC)
-hold on
-plot(Yest_case(1,:))
-figure
-plot(YW)
-hold on
-plot(Yest_case(2,:))
 %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% 
 %
 %   SECTIONS BELOW CAN BE RUN ONE-BY-ONE

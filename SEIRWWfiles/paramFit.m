@@ -4,7 +4,6 @@ function [Js, nu, RW0] = paramFit(params,YC,YW,C,gs,es,ns)
 params.gamma = gs;
 params.WWexp = es;
 
-
 %Estimate wastewater measurement variance
 RW0 = RWest(YW,params.WWexp);
 params.RW0 = RW0;

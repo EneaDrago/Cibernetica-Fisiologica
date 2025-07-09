@@ -29,7 +29,7 @@ end
 
 %Process the WW data
 WWinds = find(YW>-.5);
-YW(WWinds) = 1e-5*YW(WWinds).^params.WWexp;
+YW(WWinds) = 1e-5*YW(WWinds).^params.WWexp; 
 minYW = min(YW(WWinds));
 YCaux = sort(YC,'ascend');
 excl = sum(YCaux < 0);
@@ -59,7 +59,7 @@ if isfield(params,'ctFactor')
     nu = nu*params.ctFactor;
 end
 
-%Outlier limit: If the discrepancy of WW data and modelled output is higher
+%Outlier limit: If the discrepancy of WW data and modeled output is higher
 %than OL_limit standard deviations, the Kalman correction is plateaued on
 %the limit.
 if isfield(params,'outlierLimit')
@@ -69,28 +69,28 @@ else
 end
 
 
-%Reaction stoichiometry (w.r.t. SEIRreaction-function)
+% Reaction stoichiometry (w.r.t. SEIRreaction-function)
 % guardando colonna per colonna, mostra come cambiano le variabili di stato
 % (è la matrice che, in ISI, chiamavamo F. E' la matrice A in x'=Ax)
-AR = [-1 0 0 0 0 0; %S
-    1 -1 0 0 0 0;   %E
-    0 1 -1 0 0 0;   %I
-    1 0 0 -1 0 0;   %A
-    0 1 0 0 0 0;    %N
-    0 0 0 0 1 -1;   %W
-    0 0 0 0 0 0];   %beta
+AR = [-1  0  0  0  0  0;   %S
+       1 -1  0  0  0  0;   %E
+       0  1 -1  0  0  0;   %I
+       1  0  0 -1  0  0;   %A
+       0  1  0  0  0  0;   %N
+       0  0  0  0  1 -1;   %W
+       0  0  0  0  0  0];  %beta
 
 minWW = 0;
 iaux = find(YW(WWinds) < minWW);
 YW(WWinds(iaux)) = minWW;
 
-%Time step = 1/N_step (days)
+% Time step = 1/N_step (days)
 N_step = 10;
 
-%Initial error variance of beta
+% Initial error variance of beta
 S_beta = params.S_beta;
 
-%Variance of daily change of beta (initially)
+% Variance of daily change of beta (initially)
 Q_beta = params.Q_beta0;
 
 %Initial state
@@ -105,33 +105,33 @@ X = zeros(7,length(YC)+1);
 X(:,1) = [N-params.E_init-params.I_init; params.E_init; params.I_init; params.E_init; params.E_init; 0; beta];
 
 
-%Initial state error covariance
+% Initial state error covariance
 P = [params.varE_init + params.varI_init, -params.varE_init, -params.varI_init, -params.varE_init, -params.varE_init, 0, 0;
     -params.varE_init, params.varE_init, 0, params.varE_init, params.varE_init, 0, 0;
     -params.varI_init, 0, params.varI_init, 0, 0, 0, 0;
     -params.varE_init, params.varE_init, 0, params.varE_init, params.varE_init, 0, 0;
     -params.varE_init, params.varE_init, 0, params.varE_init, params.varE_init, 0, 0;
-    0, 0, 0, 0, 0, 0, 0;
-    0, 0, 0, 0, 0, 0, S_beta];
+     0, 0, 0, 0, 0, 0, 0;
+     0, 0, 0, 0, 0, 0, S_beta];
 
 
-%Measurement error variance (for cases), assuming a Binomial distribution for the number of cases
+% Measurement error variance (for cases), assuming a Binomial distribution for the number of cases
 RC = movmean(YC,[6,0]).*C(1:length(YC))./movmean(C(1:length(YC)),[6,0]).*(1-C(1:length(YC))) + 1;
 if isfield(params,'Radditional')
     RC = RC + params.Radditional;
 end
 
 
-%Measurement error variance for WW data
+% Measurement error variance for WW data
 RW = params.RW;
 
-%Number of detected cases today depends linearly on the true number of new
-%cases today
-Ccase = [0, 0, 0, 0, 1, 0, 0];
-Cww = [0, 0, 0, nu, 0, 0, 0];
+% Number of detected cases today depends linearly on the true number of new
+% cases today
+Ccase = [0, 0, 0,  0, 1, 0, 0];
+Cww   = [0, 0, 0, nu, 0, 0, 0];
 
-Ypred = zeros(2,size(YC,2));
-Yest = zeros(2,size(YC,2));
+Ypred   = zeros(2,size(YC,2));
+Yest    = zeros(2,size(YC,2));
 errReff = zeros(1,length(YC));
 
 
@@ -145,17 +145,17 @@ for jday = 1:max(maxind)
         Q_beta = params.Q_beta1; 
     end
     
-    %Initialise prediction variables
+    % Initialise prediction variables
     Xhat = X(:,jday);
     Phat = P;
     
-    %Reset the "cases today" counter and corresponding covariance
+    % Reset the "cases today" counter and corresponding covariance
     Xhat(5) = 0;
     Phat(5,:) = 0;
     Phat(:,5) = 0;
     
-    %Time loop for one day (remind: each day is devided into N_step
-    %substeps)
+    % Time loop for one day (remind: each day is devided into N_step
+    % substeps)
     for jt = 1:N_step
         [RR, Jf] = SEIRreaction(Xhat,N,alpha,tau,gamma,nu,eta,1/N_step);
         Xhat = Xhat + AR*RR;
@@ -169,14 +169,14 @@ for jday = 1:max(maxind)
     outInds = [];
     Yday = [];
     
-    %Predicted number of daily new cases and wastewater measurement
+    % Predicted number of daily new cases and wastewater measurement
     Ypred(:,jday) = [C(jday)*Ccase; Cww]*Xhat + [0; minWW];
     
     %% Considero l'osservazione all'istante di tempo corrente
     % in base a quali misurazioni sono attive (e quali dati sono
     % disponibili), creo una Call
 
-    %Check if there's case data for today
+    % Check if there's case data for today
     % useData(1) = True => use case data
     % (if the data is missing, YC(jday) = -1)
     if  useData(1) && YC(jday) > -.5
@@ -186,7 +186,7 @@ for jday = 1:max(maxind)
         outInds = [outInds; 1];
     end
     
-    %Check if there's wastewater data for today
+    % Check if there's wastewater data for today
     % useData(2) = True => use ww data
     WWii = 0;
     if useData(2) && YW(jday) > -.00005
@@ -198,13 +198,13 @@ for jday = 1:max(maxind)
     end
     
     
-    %Check if there was new data on this time step
+    % Check if there was new data on this time step
     if size(Call,1) > 0
     
-        %Measurement covariance
+        % Measurement covariance
         S = Call*Phat*Call' + diag(R);
 
-        %Outlier detection and plateauing
+        % Outlier detection and plateauing
         if WWii > 0
              discrepancy = (Yday(WWii) - Ypred(2,jday))/(S(WWii,WWii) + params.RW0 - params.RW)^.5;
               if abs(discrepancy) > OL_limit
@@ -212,34 +212,34 @@ for jday = 1:max(maxind)
               end
          end
         
-        %State update based on true and predicted number
+        % State update based on true and predicted number
         X(:,jday+1) = Xhat + Phat*Call'*S^-1*(Yday-Ypred(outInds,jday));
 
-        %Covariance update
+        % Covariance update
         P = Phat - Phat*Call'*S^-1*Call*Phat;
         
     else
         
-        %In case of no new data, skip the update step
+        % In case of no new data, skip the update step
         P = Phat;
         X(:,jday+1) = Xhat;
     end
 
-    %Ensure the states to be non-negative (typically not a problem)
+    % Ensure the states to be non-negative (typically not a problem)
     X(2,jday+1) = max(X(2,jday+1),0);
     X(3,jday+1) = max(X(3,jday+1),0);
     
-    %Estimated number of daily new cases and wastewater measurement
+    % Estimated number of daily new cases and wastewater measurement
     Yest(:,jday) = [C(jday)*Ccase; Cww]*X(:,jday+1) + [0; minWW];
 
-    %Standard deviations for the outputs
+    % Standard deviations for the outputs
     Ysd(1,jday) = C(jday)^2*Ccase*P*Ccase' + RC(jday);
     Ysd(2,jday) = Cww*P*Cww' + params.RW0;
     
-    %Store the error variance of beta
+    % Store the error variance of beta
     errReff(jday) = P(7,7)^.5*X(1,jday)/N/tau; 
     
-    %Store the state estimate of requested times
+    % Store the state estimate of requested times
     if jday == maxind(jaux)
         Xend(:,jaux) = X(:,jday+1);
         jaux = jaux + 1;
@@ -249,7 +249,7 @@ end
 % Calculate R_eff
 Reff = X(7,2:end).*X(1,2:end)/N/tau;
 
-%Plot if requested
+% Plot if requested
 if pl
 
     % se non sono state usate le misure dei CASE (i.e., solo WW)
@@ -286,7 +286,7 @@ if pl
        matlab2tikz(fileName, ...
            'showInfo', false);
         
-        %Correlation between case numbers and reconstructed case numbers
+        % Correlation between case numbers and reconstructed case numbers
         CaseCorr = sum((YC-mean(YC)).*(Yest(1,:)-mean(Yest(1,:))))/norm(YC-mean(YC))/norm(Yest(1,:)-mean(Yest(1,:)))
         
         Ysm1 = movmean(YC,[6 0]);
