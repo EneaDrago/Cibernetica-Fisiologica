@@ -123,8 +123,8 @@ else
 end
 ylabel('Daily cases', 'FontSize', 16);
 set(gca, 'FontSize', 14);
-xticks(firsts+firsts);      % da aggiustare
-xticklabels(labs);
+% xticks(firsts+firsts);      % da aggiustare
+% xticklabels(labs);
 legend({'Projection', 'Data'}, 'Location', 'northeast', 'FontSize', 14);
 box on;
 
@@ -151,15 +151,15 @@ h2 = fill([min(predDay,length(YC)):length(Yc0), fliplr(predDay:length(Yc0))], ..
           [Yc0(predDay), Ycm1(predDay+1:end), fliplr(Yc1(predDay+1:end)), Yc0(predDay)], ...
           [1, 0.67, 0.67], 'EdgeColor', 'none', 'FaceAlpha', 0.3);
 if any(strcmp(params.region, {'Luxembourg'}))
-    xlabel('Dates 2020–2021', 'FontSize', 16);
+    xlabel('Days starting from 25-Feb-2020', 'FontSize', 16);
 else
-    xlabel('Dates 2020–2023', 'FontSize', 16);
+    xlabel('Days starting from 04-Oct-2021', 'FontSize', 16);
 end
 ylabel('Cumulative cases', 'FontSize', 16);
 set(gca, 'FontSize', 14);
 set(gca, 'Layer', 'top');
-xticks(firsts+firsts);  % da aggiustare
-xticklabels(labs);
+% xticks(firsts+firsts);  % da aggiustare
+% xticklabels(labs);
 legend({'Projection', 'Data', '±2σ Range', '±1σ Range'}, 'Location', 'northwest', 'FontSize', 14);
 if ~exist('immagini', 'dir')
     mkdir('immagini');
@@ -177,95 +177,3 @@ matlab2tikz(fileName, ...
     'showInfo', false);
 
 
-%% Project forward in time predizione prima
-
-%At what date is the forward prediction done
-numEstDays = 250;
-predDay = length(YC)-numEstDays+1;
-numEstDays = 250;
-
-%Use case/WW data or both
-dataToUse = [true, false];
-
-params.RW = params.RW0/10;
-[~, XendC, PC] = SEIR_WW(params,YC,YW,C,dataToUse,predDay,firsts,labs,false,regionName);
-[Y0, err] = SEIR_WW_FWD(XendC,C,PC,predDay+1,params,numEstDays);
-Yc0 = cumsum([YC(1:predDay) Y0(1,:)]);
-Xaux = XendC;
-Xaux(7) = XendC(7) + PC(7,7).^.5;
-Y1 = SEIR_WW_FWD(Xaux,C,PC,predDay+1,params,330);
-Yc1 = cumsum([YC(1:predDay) Y1(1,:)]);
-Xaux(7) = XendC(7) + 2*PC(7,7).^.5;
-Y2 = SEIR_WW_FWD(Xaux,C,PC,predDay+1,params,330);
-Yc2 = cumsum([YC(1:predDay) Y2(1,:)]);
-Xaux(7) = XendC(7) - PC(7,7).^.5;
-Ym1 = SEIR_WW_FWD(Xaux,C,PC,predDay+1,params,330);
-Ycm1 = cumsum([YC(1:predDay) Ym1(1,:)]);
-Xaux(7) = XendC(7) - 2*PC(7,7).^.5;
-Ym2 = SEIR_WW_FWD(Xaux,C,PC,predDay+1,params,330);
-Ycm2 = cumsum([YC(1:predDay) Ym2(1,:)]);
-
-%% Creazione della figure 
-figure('Position',[400, 200, 560, 380]); 
-hold on; grid on;
-plot(movmean([YC(1:predDay), Y0(1,:)], [6, 0]), 'r-', 'LineWidth', 2);
-plot(movmean(YC, [6, 0]), 'k-', 'LineWidth', 2);
-if any(strcmp(params.region, {'Luxembourg'}))
-    xlabel('Dates 2020–2021', 'FontSize', 16);
-else
-    xlabel('Dates 2020–2023', 'FontSize', 16);
-end
-ylabel('Daily cases', 'FontSize', 16);
-set(gca, 'FontSize', 14);
-xticks(firsts+firsts);
-xticklabels(labs);
-legend({'Projection', 'Data'}, 'Location', 'northeast', 'FontSize', 14);
-box on;
-
-if ~exist('img', 'dir')
-    mkdir('img');
-end
-outputFolder = fullfile('img', regionName);
-if ~exist(outputFolder, 'dir')
-    mkdir(outputFolder);
-end
-fileName = fullfile(outputFolder, ['projection_validation' regionName '.tex']);
-matlab2tikz(fileName, ...
-    'showInfo', false);
-
-figure('Position', [400, 200, 560, 380]); 
-hold on; grid on;
-plot(Yc0, 'r-', 'LineWidth', 2);
-plot(cumsum(YC), 'k-', 'LineWidth', 2);
-h1 = fill([min(predDay,length(YC)):length(Yc0), fliplr(predDay:length(Yc0))], ...
-          [Yc0(predDay), Ycm2(predDay+1:end), fliplr(Yc2(predDay+1:end)), Yc0(predDay)], ...
-          [1, 0.77, 0.77], 'EdgeColor', 'none', 'FaceAlpha', 0.3);
-
-h2 = fill([min(predDay,length(YC)):length(Yc0), fliplr(predDay:length(Yc0))], ...
-          [Yc0(predDay), Ycm1(predDay+1:end), fliplr(Yc1(predDay+1:end)), Yc0(predDay)], ...
-          [1, 0.67, 0.67], 'EdgeColor', 'none', 'FaceAlpha', 0.3);
-if any(strcmp(params.region, {'Luxembourg'}))
-    xlabel('Dates 2020–2021', 'FontSize', 16);
-else
-    xlabel('Dates 2020–2023', 'FontSize', 16);
-end
-ylabel('Cumulative cases', 'FontSize', 16);
-set(gca, 'FontSize', 14);
-set(gca, 'Layer', 'top');
-xticks(firsts+firsts);
-xticklabels(labs);
-legend({'Projection', 'Data', '±2σ Range', '±1σ Range'}, 'Location', 'northwest', 'FontSize', 14);
-if ~exist('immagini', 'dir')
-    mkdir('immagini');
-end
-
-if ~exist('img', 'dir')
-    mkdir('img');
-end
-outputFolder = fullfile('img', regionName);
-if ~exist(outputFolder, 'dir')
-    mkdir(outputFolder);
-end
-fileName = fullfile(outputFolder, ['projection_validation_cumsum' regionName '.tex']);
-matlab2tikz(fileName, ...
-    'showInfo', false);
