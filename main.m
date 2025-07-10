@@ -3,8 +3,8 @@ close all
 clc
 
 %Load the data and parameters
-% regionName = 'Luxembourg';
-regionName = 'wwtp1';
+regionName = 'Luxembourg';
+% regionName = 'wwtp1';
 % regionName = 'wwtp2';
 % regionName = 'wwtp3';
 % regionName = 'wwtp4';
@@ -33,31 +33,27 @@ addpath('./SEIRWWfiles/')
 TT = readtable(dataFile);
 YC = TT.cases';
 YW = TT.ww';
+YWip = WWinterpol(YW);
 
 %Determine c_t and plot label dates. Remember to update the specialHolidays
 %indices if needed.
-[C, labs, firsts, longDates] = SEIRWWinit(YC, startDate, specialHolidays, params.darkNumber);
 
-%% Determine open-loop
+[C, labs, firsts, longDates] = SEIRWWinit(YC, startDate, specialHolidays, params.darkNumber);
 params.RW = params.RW0/10;
-[Yest_case, ~, ~, ReffCase, ~] = SEIR_WW(params,YC,YW,C,[false,false],1000,firsts,labs,true,regionName);
 %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% 
 %
 %   SECTIONS BELOW CAN BE RUN ONE-BY-ONE
 %
 %%% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% 
 %% Estimate the wastewater data using only the case data
-params.RW = params.RW0/10;
+
 [Yest_case, ~, ~, ReffCase, ~] = SEIR_WW(params,YC,YW,C,[true,false],1000,firsts,labs,true,regionName);
 
 %% Estimate the case numbers using only the wastewater data
 [Yest_ww, ~, ~, ReffWW, ~] = SEIR_WW(params,YC,YW,C,[false,true],1000,firsts,labs,true,regionName);
 
-%% Estimate the case numbers using only the interpolated wastewater data
-% YWip = WWinterpol(YW);
-% [Yest_wwip, ~, ~, ~, ~] = SEIR_WW(params,YC,YWip,C,[false,true],1000,firsts,labs,true,regionName);
 
-
+%%
 % Creazione figura
 figure('Position', [100, 200, 1200, 450]);
 hold on; grid on;
@@ -92,7 +88,7 @@ correlation_Reff = corr(ReffCase', ReffWW')
 
 %At what date is the forward prediction done
 predDay = length(YC);
-numEstDays = 330;
+numEstDays = 300;
 
 %Use case/WW data or both
 dataToUse = [true, false];
@@ -127,7 +123,7 @@ else
 end
 ylabel('Daily cases', 'FontSize', 16);
 set(gca, 'FontSize', 14);
-xticks(firsts+firsts);
+xticks(firsts+firsts);      % da aggiustare
 xticklabels(labs);
 legend({'Projection', 'Data'}, 'Location', 'northeast', 'FontSize', 14);
 box on;
@@ -162,7 +158,7 @@ end
 ylabel('Cumulative cases', 'FontSize', 16);
 set(gca, 'FontSize', 14);
 set(gca, 'Layer', 'top');
-xticks(firsts+firsts);
+xticks(firsts+firsts);  % da aggiustare
 xticklabels(labs);
 legend({'Projection', 'Data', '±2σ Range', '±1σ Range'}, 'Location', 'northwest', 'FontSize', 14);
 if ~exist('immagini', 'dir')

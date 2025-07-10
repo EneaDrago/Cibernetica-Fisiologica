@@ -28,7 +28,7 @@ end
 %column contains the different ratios, and second column the start day of
 %the corresponding value (given as the number of the day counted from the
 %beginning of the data).
-params.darkNumber = [1.1 1]; % 1.9
+params.darkNumber = [1.8 1]; % 2.7
 
 %Indices of special holidays with reduced testing resulting in lower than
 %expected case numbers
@@ -51,6 +51,7 @@ TT = readtable(dataFile);
 datesRaw = TT{:,1};  % First column: dates
 YC = TT.cases';
 YW = TT.ww';
+YWip = WWinterpol(YW);
 
 % Convert to datetime if needed
 if ~isa(datesRaw, 'datetime')
@@ -61,6 +62,7 @@ end
 
 % Find the index of 01-Mar-2022
 targetDate = datetime('01-Mar-2022', 'InputFormat', 'dd-MMM-yyyy');
+targetDate = datetime('02-Aug-2021', 'InputFormat', 'dd-MMM-yyyy');
 index_calib = find(dates == targetDate);
 
 if isempty(index_calib)
@@ -75,7 +77,7 @@ fprintf('Indice per 01-Mar-2022: %d\n', index_calib);
 
 % Calibrate the model and save parameters
 YC_calibrate = YC(1:index_calib);
-YW_calibrate = YW(1:index_calib);
+YW_calibrate = YWip(1:index_calib);
 C_calibrate = C(:,1:index_calib);
 
 params = SEIRWWcalibrate(YC_calibrate,YW_calibrate,C_calibrate,params);

@@ -38,6 +38,7 @@ else
 
 end
 
+% Yest = SEIR_WW(params,YC,YW,C,[false, true],1e10);
 Yest = SEIR_WW(params,YC,YW,C,[false, true],1e10);
 Js = norm(Yest(1,:)-YC)^2; 
 
