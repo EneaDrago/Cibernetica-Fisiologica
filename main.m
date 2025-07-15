@@ -7,6 +7,8 @@ addpath(genpath(fullfile(basePath, 'MATLAB', 'matlab2tikz')));
 
 % Choose if you want do the sensitivity analysis
 sensitivity_analysis = true;
+
+% Choose which analysis you want to do
 sens_analysis_R_matrix = true;
 sens_analysis_dark_number = false;
 
