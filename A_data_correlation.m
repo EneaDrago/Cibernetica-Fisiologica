@@ -1,5 +1,5 @@
 % Carica i dati dal file Excel
-filename = './data/Toscana_wwtp1.xlsx';
+filename = './data/wwtp1.xlsx';
 T = readtable(filename);
 
 

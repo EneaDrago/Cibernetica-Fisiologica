@@ -2,28 +2,44 @@ clear
 close all
 clc
 
-%Load the data and parameters
-regionName = 'Luxembourg';
+basePath = getenv('USERPROFILE');  
+addpath(genpath(fullfile(basePath, 'MATLAB', 'matlab2tikz')));
+
+% Choose if you want do the sensitivity analysis
+sensitivity_analysis = false;
+
+% Choose which region you want study
+% regionName = 'Luxembourg';
 % regionName = 'wwtp1';
 % regionName = 'wwtp2';
 % regionName = 'wwtp3';
-% regionName = 'wwtp4';
-% regionName = 'wwtpTOT';
+regionName = 'wwtp4';
 
 paramFile = fullfile('parameters', ['params_' regionName '.mat']);
 
-% select_dark_num(regionName)
-%%
-if ~exist(paramFile, 'file')
+if sensitivity_analysis
+    select_dark_num(regionName)
+end
+
+% Choose the dark number 
+new_dark_number = 1.3;
+
+if ~exist(paramFile, 'file') 
+    latest_dark_number = new_dark_number;
+else
+    load(['./parameters/params_' regionName '.mat'])
+    latest_dark_number = params.darkNumber(1);
+end
+
+%% Run the setup 
+if ~exist(paramFile, 'file') || latest_dark_number ~= new_dark_number
     fprintf('File %s non trovato. Lancio setup...\n', paramFile);
-    setup(regionName);
+    setup(regionName,new_dark_number);
 else
     fprintf('File %s già presente. Setup non necessario.\n', paramFile);
 end
 
-
 %% Run the SEIR-WW-EKF. Calibration is not required every time new data is available.
-addpath(genpath('C:\Users\OEM\MATLAB\matlab2tikz'))
 
 %Path of the data file
 dataFile = ['./data/' regionName '.xlsx'];
@@ -31,6 +47,7 @@ dataFile = ['./data/' regionName '.xlsx'];
 load(['./parameters/params_' regionName '.mat'])
 addpath('./SEIRWWfiles/')
 TT = readtable(dataFile);
+date = datetime(TT.date);
 YC = TT.cases';
 YW = TT.ww';
 YWip = WWinterpol(YW);
@@ -44,14 +61,19 @@ params.RW = params.RW0/10;
 %
 %   SECTIONS BELOW CAN BE RUN ONE-BY-ONE
 %
-%%% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% 
-%% Estimate the wastewater data using only the case data
+%% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% 
 
-[Yest_case, ~, ~, ReffCase, ~] = SEIR_WW(params,YC,YW,C,[true,false],1000,firsts,labs,true,regionName);
+RC_scale = 1e0;
+RW_scale = 1e0;
 
-%% Estimate the case numbers using only the wastewater data
-[Yest_ww, ~, ~, ReffWW, ~] = SEIR_WW(params,YC,YW,C,[false,true],1000,firsts,labs,true,regionName);
+% %% Estimate the wastewater data using only the case data
+% [Yest_case, ~, ~, ReffCase, ~] = SEIR_WW(params,YC,YW,C,[true,true],1000,firsts,labs,true,regionName,RW_scale,RC_scale);
+% 
+% %% Estimate the case numbers using only the wastewater data
+% [Yest_ww, ~, ~, ReffWW, ~] = SEIR_WW(params,YC,YW,C,[false,true],1000,firsts,labs,true,regionName,RW_scale,RC_scale);
 
+%% Estimate the case numbers using both data
+[Yest_both, ~, ~, Reff_both, ~] = SEIR_WW(params,YC,YW,C,[true,true],1000,firsts,labs,true,regionName,RW_scale,RC_scale);
 
 %%
 % Creazione figura
@@ -97,22 +119,22 @@ params.RW = params.RW0/10;
 [~, XendC, PC] = SEIR_WW(params,YC,YW,C,dataToUse,predDay,firsts,labs,false,regionName);
 [Y0, err] = SEIR_WW_FWD(XendC,C,PC,predDay+1,params,numEstDays);
 Yc0 = cumsum([YC(1:predDay) Y0(1,:)]);
-Xaux = XendC;
-Xaux(7) = XendC(7) + PC(7,7).^.5;
-Y1 = SEIR_WW_FWD(Xaux,C,PC,predDay+1,params,330);
-Yc1 = cumsum([YC(1:predDay) Y1(1,:)]);
-Xaux(7) = XendC(7) + 2*PC(7,7).^.5;
-Y2 = SEIR_WW_FWD(Xaux,C,PC,predDay+1,params,330);
-Yc2 = cumsum([YC(1:predDay) Y2(1,:)]);
-Xaux(7) = XendC(7) - PC(7,7).^.5;
-Ym1 = SEIR_WW_FWD(Xaux,C,PC,predDay+1,params,330);
-Ycm1 = cumsum([YC(1:predDay) Ym1(1,:)]);
-Xaux(7) = XendC(7) - 2*PC(7,7).^.5;
-Ym2 = SEIR_WW_FWD(Xaux,C,PC,predDay+1,params,330);
-Ycm2 = cumsum([YC(1:predDay) Ym2(1,:)]);
+% Xaux = XendC;
+% Xaux(7) = XendC(7) + PC(7,7).^.5;
+% Y1 = SEIR_WW_FWD(Xaux,C,PC,predDay+1,params,330);
+% Yc1 = cumsum([YC(1:predDay) Y1(1,:)]);
+% Xaux(7) = XendC(7) + 2*PC(7,7).^.5;
+% Y2 = SEIR_WW_FWD(Xaux,C,PC,predDay+1,params,330);
+% Yc2 = cumsum([YC(1:predDay) Y2(1,:)]);
+% Xaux(7) = XendC(7) - PC(7,7).^.5;
+% Ym1 = SEIR_WW_FWD(Xaux,C,PC,predDay+1,params,330);
+% Ycm1 = cumsum([YC(1:predDay) Ym1(1,:)]);
+% Xaux(7) = XendC(7) - 2*PC(7,7).^.5;
+% Ym2 = SEIR_WW_FWD(Xaux,C,PC,predDay+1,params,330);
+% Ycm2 = cumsum([YC(1:predDay) Ym2(1,:)]);
 
 %% Creazione della figure
-figure('Position',[400, 200, 560, 380]); 
+figure('Position',[100, 200, 1200, 450]); 
 hold on; grid on;
 plot(movmean([YC(1:predDay), Y0(1,:)], [6, 0]), 'r-', 'LineWidth', 2);
 plot(movmean(YC, [6, 0]), 'k-', 'LineWidth', 2);
@@ -123,11 +145,8 @@ else
 end
 ylabel('Daily cases', 'FontSize', 16);
 set(gca, 'FontSize', 14);
-% xticks(firsts+firsts);      % da aggiustare
-% xticklabels(labs);
 legend({'Projection', 'Data'}, 'Location', 'northeast', 'FontSize', 14);
 box on;
-
 if ~exist('img', 'dir')
     mkdir('img');
 end
@@ -139,17 +158,11 @@ fileName = fullfile(outputFolder, ['grafico_casi_giornalieri_' regionName '.tex'
 matlab2tikz(fileName, ...
     'showInfo', false);
 
-figure('Position', [400, 200, 560, 380]); 
+
+figure('Position', [100, 200, 1200, 450]); 
 hold on; grid on;
 plot(Yc0, 'r-', 'LineWidth', 2);
 plot(cumsum(YC), 'k-', 'LineWidth', 2);
-h1 = fill([min(predDay,length(YC)):length(Yc0), fliplr(predDay:length(Yc0))], ...
-          [Yc0(predDay), Ycm2(predDay+1:end), fliplr(Yc2(predDay+1:end)), Yc0(predDay)], ...
-          [1, 0.77, 0.77], 'EdgeColor', 'none', 'FaceAlpha', 0.3);
-
-h2 = fill([min(predDay,length(YC)):length(Yc0), fliplr(predDay:length(Yc0))], ...
-          [Yc0(predDay), Ycm1(predDay+1:end), fliplr(Yc1(predDay+1:end)), Yc0(predDay)], ...
-          [1, 0.67, 0.67], 'EdgeColor', 'none', 'FaceAlpha', 0.3);
 if any(strcmp(params.region, {'Luxembourg'}))
     xlabel('Days starting from 25-Feb-2020', 'FontSize', 16);
 else
@@ -158,13 +171,7 @@ end
 ylabel('Cumulative cases', 'FontSize', 16);
 set(gca, 'FontSize', 14);
 set(gca, 'Layer', 'top');
-% xticks(firsts+firsts);  % da aggiustare
-% xticklabels(labs);
 legend({'Projection', 'Data', '±2σ Range', '±1σ Range'}, 'Location', 'northwest', 'FontSize', 14);
-if ~exist('immagini', 'dir')
-    mkdir('immagini');
-end
-
 if ~exist('img', 'dir')
     mkdir('img');
 end
@@ -177,3 +184,29 @@ matlab2tikz(fileName, ...
     'showInfo', false);
 
 
+%% Correlation between cases and ww data
+% Normalizza entrambi i vettori [0, 1]
+cases_norm = (YC - min(YC)) / (max(YC) - min(YC));
+ww_norm = (YW - min(YW)) / (max(YW) - min(YW));
+
+% Calcola la correlazione di Pearson
+R = corr(cases_norm, ww_norm);
+% Plot
+figure('Position', [100, 200, 1200, 450]); 
+hold on; grid on;
+plot(date, cases_norm, 'r-', 'LineWidth', 2);
+plot(date, ww_norm, 'k-', 'LineWidth', 2);
+xlabel('Date');
+ylabel('Normalized value', 'FontSize', 16);
+set(gca, 'FontSize', 14, 'Layer', 'top');
+legend({'Normalized Cases', 'Normalized Wastewater'}, 'Location', 'best','FontSize', 14);
+if ~exist('img', 'dir')
+    mkdir('img');
+end
+outputFolder = fullfile('img', regionName);
+if ~exist(outputFolder, 'dir')
+    mkdir(outputFolder);
+end
+fileName = fullfile(outputFolder, ['img_data_' regionName '.tex']);
+matlab2tikz(fileName, ...
+    'showInfo', false);

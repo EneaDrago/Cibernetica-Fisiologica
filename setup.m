@@ -1,4 +1,4 @@
-function [] = setup(regionName)
+function [] = setup(regionName,dark_number)
 %% Set initial parameters
 
 %The name of the region
@@ -28,19 +28,11 @@ end
 %column contains the different ratios, and second column the start day of
 %the corresponding value (given as the number of the day counted from the
 %beginning of the data).
-params.darkNumber = [1.8 1]; % 2.7
+params.darkNumber = [dark_number 1]; % 2.7
 
 %Indices of special holidays with reduced testing resulting in lower than
 %expected case numbers
 specialHolidays = [];
-
-%Start date of the data (used for plots), format 'DD/MM/YYYY'
-if params.region == "Luxembourg"
-    startDate = '25/02/2020';
-else
-    startDate = '04/10/2021';
-end
-
 
 %% Import data, calibrate model, and save parameters and data together
 
@@ -60,14 +52,22 @@ else
     dates = datesRaw;
 end
 
-% Find the index of 01-Mar-2022
-targetDate = datetime('01-Mar-2022', 'InputFormat', 'dd-MMM-yyyy');
-targetDate = datetime('02-Aug-2021', 'InputFormat', 'dd-MMM-yyyy');
-index_calib = find(dates == targetDate);
-
-if isempty(index_calib)
-    error('La data 01-Mar-2022 non è presente nel file.');
-end
+    % Start date of the data (used for plots), format 'DD/MM/YYYY'
+    if params.region == "Luxembourg"
+        startDate = '25/02/2020';
+        targetDate = datetime('02-Aug-2021', 'InputFormat', 'dd-MMM-yyyy');
+        index_calib = find(dates == targetDate);
+        if isempty(index_calib)
+            error('La data 02-Aug-2021 non è presente nel file.');
+        end
+    else
+        startDate = '04/10/2021';
+        targetDate = datetime('01-Mar-2022', 'InputFormat', 'dd-MMM-yyyy');
+        index_calib = find(dates == targetDate);
+        if isempty(index_calib)
+            error('La data 01-Mar-2022 non è presente nel file.');
+        end
+    end
 
 % Print info
 fprintf('Indice per 01-Mar-2022: %d\n', index_calib);

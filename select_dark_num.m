@@ -1,10 +1,7 @@
 function [] = select_dark_num(regionName)
 
-
 %The name of the region
 params.region = regionName;
-%params.region = 'Luxembourg';
-
 
 %Path of the data file
 dataFile = ['./data/' params.region '.xlsx'];
@@ -37,23 +34,27 @@ all_gamma = [];
 all_eps = [];
 count = 1;
 
-n_start = 1.1;
+figHandles = gobjects(1,6);
+for i = 1:6
+    figHandles(i) = figure(i);
+    clf;
+    hold on;
+    set(figHandles(i), 'Position', [100, 200, 1200, 450]);  % Imposta dimensione e posizione
+end
+
+n_start = 1.1; % First dark number
 n_inc = 0.1;
-n_end = 4;
+n_end = 4;     % Last dark number
+
 for dn = n_start:n_inc:n_end
     params.darkNumber = [dn 1];
+
+    fprintf('iterazione numero: %d\n', count);
+    count = count +1;
 
     %Indices of special holidays with reduced testing resulting in lower than
     %expected case numbers
     specialHolidays = [];
-
-    %Start date of the data (used for plots), format 'DD/MM/YYYY'
-    if params.region == "Luxembourg"
-        startDate = '25/02/2020';
-    else
-        startDate = '04/10/2021';
-    end
-
 
     %% Import data, calibrate model, and save parameters and data together
 
@@ -71,27 +72,34 @@ for dn = n_start:n_inc:n_end
         dates = datetime(datesRaw);
     else
         dates = datesRaw;
-    end
+    end    
 
-    % Find the index of 01-Mar-2022
-    targetDate = datetime('02-Aug-2021', 'InputFormat', 'dd-MMM-yyyy');
-    index_calib = find(dates == targetDate);
-
-    if isempty(index_calib)
-        error('La data 01-Mar-2022 non è presente nel file.');
+    % Start date of the data (used for plots), format 'DD/MM/YYYY'
+    if params.region == "Luxembourg"
+        startDate = '25/02/2020';
+        targetDate = datetime('02-Aug-2021', 'InputFormat', 'dd-MMM-yyyy');
+        index_calib = find(dates == targetDate);
+        if isempty(index_calib)
+            error('La data 02-Aug-2021 non è presente nel file.');
+        end
+    else
+        startDate = '04/10/2021';
+        targetDate = datetime('01-Mar-2022', 'InputFormat', 'dd-MMM-yyyy');
+        index_calib = find(dates == targetDate);
+        if isempty(index_calib)
+            error('La data 01-Mar-2022 non è presente nel file.');
+        end
     end
 
     % Calibrate the model and save parameters
     YC_calibrate = YC(1:index_calib);
     YW_calibrate = YWip(1:index_calib);
-    % C_calibrate = C(:,1:index_calib);
 
     %Determine c_t and plot label dates
     [C, labs, firsts, longDates] = SEIRWWinit(YC_calibrate,startDate,specialHolidays,params.darkNumber);
 
 
     [params,J] = SEIRWWcalibrate(YC_calibrate,YW_calibrate,C,params);
-    save(['./parameters/params_' params.region '.mat'],'params','specialHolidays','startDate','labs','firsts')
 
     all_J = [all_J; J];
     if J < J_min
@@ -102,9 +110,30 @@ for dn = n_start:n_inc:n_end
     all_eps = [all_eps; params.WWexp];
     all_gamma = [all_gamma; params.gamma];
 
-    fprintf('iterazione numero: %d\n', count);
-    count = count +1;
+    if abs(dn - 1.8) < 1e-6
+        params.RW = params.RW0/10;
+        plot_color = 'g';
+        [~, ~, ~, ~, ~] = SEIR_WW_sens(params,YC,YW,C,[true,false],1000,firsts,labs,true,regionName, figHandles,plot_color);
+        [~, ~, ~, ~, ~] = SEIR_WW_sens(params,YC,YW,C,[false,true],1000,firsts,labs,true,regionName, figHandles,plot_color);
+        disp(1.8)
+    end
+
+    if dn==3
+        params.RW = params.RW0/10;
+        plot_color = 'r';
+        [~, ~, ~, ~, ~] = SEIR_WW_sens(params,YC,YW,C,[true,false],1000,firsts,labs,true,regionName, figHandles,plot_color);
+        [~, ~, ~, ~, ~] = SEIR_WW_sens(params,YC,YW,C,[false,true],1000,firsts,labs,true,regionName, figHandles,plot_color);
+        disp(3)
+    end
+
 end
+
+params.darkNumber = [dn_min 1];
+[C, labs, firsts, ~] = SEIRWWinit(YC_calibrate,startDate,specialHolidays,params.darkNumber);
+[params,~] = SEIRWWcalibrate(YC_calibrate,YW_calibrate,C,params);
+plot_color = 'b';
+[~, ~, ~, ~, ~] = SEIR_WW_sens(params,YC,YW,C,[true,false],1000,firsts,labs,true,regionName, figHandles,plot_color);
+[~, ~, ~, ~, ~] = SEIR_WW_sens(params,YC,YW,C,[false,true],1000,firsts,labs,true,regionName, figHandles,plot_color);
 
 disp("Il migliore dark number è: ")
 disp(dn_min)

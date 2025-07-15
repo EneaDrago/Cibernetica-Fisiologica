@@ -1,9 +1,6 @@
-function [Yest, Xend, P, Reff, errReff, Ysd] = SEIR_WW(params,YC,YW,C,useData,maxind,firsts,labs,pl,regionName,RW_scale,RC_scale)
+function [Yest, Xend, P, Reff, errReff, Ysd] = SEIR_WW_sens(params,YC,YW,C,useData,maxind,firsts,labs,pl,regionName, figHandles,plot_color)
 
-%params: the coefficients in the SEIR ODE
-%useData is 2D logical: 
-%   useData(1): Use the daily case data?
-%   useData(2): Use the wastewater data?
+% As SEIR_WW, use for sensitivity plot
 
 
 %%
@@ -11,16 +8,21 @@ if ~exist('pl')
     pl = false;
 end
 
-if ~exist('RW_scale') && ~exist('RC_scale')
-    RW_scale = 1e0;
-    RC_scale = 1e0;
-end
-
 if length(maxind) == 1 && maxind > length(YC)
     maxind = length(YC);
 end
 
-% params.WWexp = 1;
+%Indicator for plotting big figures
+plotSpec = false;
+if ischar(pl)
+    plotSpec = true;
+    if strcmp(pl,'big')
+        plotloc = [100,200,1200,450];
+    elseif strcmp(pl,'small')
+        plotloc = [100,200,560,350];
+    end
+    pl = true;
+end
 
 %Process the WW data
 WWinds = find(YW>-.5);
@@ -176,7 +178,7 @@ for jday = 1:max(maxind)
     % Check if there's case data for today
     % useData(1) = True => use case data
     % (if the data is missing, YC(jday) = -1)
-    if  useData(1) && YC(jday) > -.5 && ~useData(2)
+    if  useData(1) && YC(jday) > -.5
         Call = [Call; C(jday)*Ccase];
         R = [R; RC(jday)];
         Yday = [Yday; YC(jday)];
@@ -186,21 +188,15 @@ for jday = 1:max(maxind)
     % Check if there's wastewater data for today
     % useData(2) = True => use ww data
     WWii = 0;
-    if useData(2) && YW(jday) > -.00005 && ~useData(1)
+    if useData(2) && YW(jday) > -.00005
         Call = [Call; Cww];
         R = [R; RW];
         Yday = [Yday; YW(jday)];
         outInds = [outInds; 2];
         WWii = length(Yday); 
-    end
-
-    % Check if there's both data for today
-    if useData(1) && useData(2) && YC(jday) > -.5 && YW(jday) > -.00005
-        Call = [C(jday)*Ccase; Cww];          
-        R = diag([RC(jday)*RC_scale, RW*RW_scale]);             
-        Yday = [YC(jday); YW(jday)];          
-        outInds = [1; 2];                     
-        WWii = 2;                             
+        % 
+        % disp(count)
+        % count = count+1;
     end
     
     
@@ -232,20 +228,10 @@ for jday = 1:max(maxind)
     end
 
     % Ensure the states to be non-negative (typically not a problem)
-    % 
-    % X(1,jday+1) = max(X(1,jday+1),0);
-    % X(2,jday+1) = max(X(2,jday+1),0);
-    % X(3,jday+1) = max(X(3,jday+1),0);
-    % X(4,jday+1) = max(X(4,jday+1),0);
-    % X(5,jday+1) = max(X(5,jday+1),0);
-    % X(6,jday+1) = max(X(6,jday+1),0);
-    % X(7,jday+1) = max(X(7,jday+1),0);
-
-    for i=1:6
-        if X(i,jday+1)<=0
-            X(i,jday+1) = X(i,jday);
-        end
-    end
+    X(2,jday+1) = max(X(2,jday+1),0);
+    X(3,jday+1) = max(X(3,jday+1),0);
+    X(4,jday+1) = max(X(4,jday+1),0);
+    X(5,jday+1) = max(X(5,jday+1),0);
     
     % Estimated number of daily new cases and wastewater measurement
     Yest(:,jday) = [C(jday)*Ccase; Cww]*X(:,jday+1) + [0; minWW];
@@ -272,14 +258,10 @@ if pl
 
     % se non sono state usate le misure dei CASE (i.e., solo WW)
     if ~useData(1)
-       figure('Position', [100, 200, 1200, 450]);
+       figure(figHandles(1));
        hold on; grid on;
        Yaux = movmean(Yest(1, :), [6, 0]);             % Stima filtrata dei casi
-       Ysdaux = movmean(sqrt(Ysd(1, :)), [6, 0]);      % Deviazione standard smoothed
-       fill([1:length(Yaux), fliplr(1:length(Yaux))], ...
-           [max(Yaux - 2 * Ysdaux, 0), fliplr(Yaux + 2 * Ysdaux)], ...
-           [1, 0.93, 0.93], 'EdgeColor', 'none', 'FaceAlpha', 0.5);
-       plot(Yaux, 'r-', 'LineWidth', 2);                          % Stima wastewater
+       plot(Yaux, plot_color, 'LineWidth', 2);                          % Stima wastewater
        plot(movmean(YC, [6, 0]), ':k', 'LineWidth', 2);           % Dati reali (smoothed)
        set(gca, 'FontSize', 14, 'Layer', 'top');
        xticks(firsts);
@@ -290,9 +272,6 @@ if pl
        else
            xlabel('Dates 2021–23', 'FontSize', 16);
        end
-       legend({'2SD envelope','Estimated from wastewater data', 'Cases data'}, ...
-           'Location', 'northeast', 'FontSize', 14);
-       
        if ~exist('img', 'dir')
            mkdir('img');
        end
@@ -300,22 +279,15 @@ if pl
        if ~exist(outputFolder, 'dir')
            mkdir(outputFolder);
        end
-       fileName = fullfile(outputFolder, ['img_casi_corr_ww_' regionName '.tex']);
+       fileName = fullfile(outputFolder, ['img_casi_corr_ww_sens_' regionName '.tex']);
        matlab2tikz(fileName, ...
            'showInfo', false);
 
-       figure('Position', [100, 200, 1200, 450]);
+       figure(figHandles(2));
         hold on; grid on;
         Ymean = (1e5 *Yest(2, :) + minYW).^(1 / params.WWexp);
         Ydata = (1e5 *YW(WWinds) + minYW).^(1 / params.WWexp);
-        Yhi =  1e5 *Yest(2, :) + minYW + 2 * 1e5 * sqrt(Ysd(2, :));
-        Ylo = max(1e5 *Yest(2, :) + minYW - 2 * 1e5 * sqrt(Ysd(2, :)), 0);
-        Yhi_transf = Yhi.^(1 / params.WWexp);
-        Ylo_transf = Ylo.^(1 / params.WWexp);
-        fill([1:length(Yest), fliplr(1:length(Yest))], ...
-            [Ylo_transf, fliplr(Yhi_transf)], ...
-            [1, 0.93, 0.93], 'EdgeColor', 'none', 'FaceAlpha', 0.5);
-        plot(movmean(Ymean, [6, 0]), '-r', 'LineWidth', 2);                      % Stima
+        plot(movmean(Ymean, [6, 0]), plot_color, 'LineWidth', 2);                      % Stima
         plot(WWinds, movmean(Ydata, [6, 0]), '--k', 'LineWidth', 2); % Dati osservati
         set(gca, 'FontSize', 14, 'Layer', 'top');
         xticks(firsts);
@@ -326,9 +298,6 @@ if pl
         else
             xlabel('Dates 2021–2023', 'FontSize', 16);
         end
-        legend({'2SD envelope','Estimated from wastewater data', 'WW data'}, ...
-            'Location', 'northeast', 'FontSize', 14);
-        
         if ~exist('img', 'dir')
             mkdir('img');
         end
@@ -336,24 +305,15 @@ if pl
         if ~exist(outputFolder, 'dir')
             mkdir(outputFolder);
         end
-       fileName = fullfile(outputFolder, ['img_ww_corr_ww_' regionName '.tex']);
+       fileName = fullfile(outputFolder, ['img_ww_corr_ww_sens_' regionName '.tex']);
        matlab2tikz(fileName, ...
            'showInfo', false);
         
-        % Correlation between case numbers and reconstructed case numbers
-        CaseCorr = sum((YC-mean(YC)).*(Yest(1,:)-mean(Yest(1,:))))/norm(YC-mean(YC))/norm(Yest(1,:)-mean(Yest(1,:)))
-        
-        Ysm1 = movmean(YC,[6 0]);
-        Ysm2 = movmean(Yest(1,:),[6 0]);
-        
-        CaseCorrSm = sum((Ysm1-mean(Ysm1)).*(Ysm2-mean(Ysm2)))/norm(Ysm1-mean(Ysm1))/norm(Ysm2-mean(Ysm2))
-        
-
         % Creazione figura
-        figure('Position', [100, 200, 1200, 450]);
+        figure(figHandles(3));
         hold on; grid on;
         plot(cumsum(YC), 'k', 'LineWidth', 2);            % Dati reali
-        plot(cumsum(Yest(1, :)), 'r', 'LineWidth', 2);     % Stima da acque reflue
+        plot(cumsum(Yest(1, :)), plot_color, 'LineWidth', 2);     % Stima da acque reflue
         set(gca, 'FontSize', 14, 'Layer', 'top');
         xticks(firsts);
         xticklabels(labs);
@@ -363,8 +323,6 @@ if pl
         else
             xlabel('Dates 2021–23', 'FontSize', 16);
         end
-        legend({'Data', 'Estimated from ww data'}, 'Location', 'northwest', 'FontSize', 14);
-
         if ~exist('img', 'dir')
             mkdir('img');
         end
@@ -372,7 +330,7 @@ if pl
         if ~exist(outputFolder, 'dir')
             mkdir(outputFolder);
         end
-        fileName = fullfile(outputFolder, ['img_cumsum_casi_corr_ww_' regionName '.tex']);
+        fileName = fullfile(outputFolder, ['img_cumsum_casi_corr_ww_sens_' regionName '.tex']);
         matlab2tikz(fileName, ...
            'showInfo', false);
 
@@ -382,14 +340,10 @@ if pl
     % quindi, questo plot serve a valutare quanto bene i dati clinici (casi) riescano a spiegare la dinamica nelle acque reflue.
     if ~useData(2)
 
-       figure('Position', [100, 200, 1200, 450]);
+       figure(figHandles(4));
        hold on; grid on;
        Yaux = movmean(Yest(1, :), [6, 0]);             % Stima filtrata dei casi
-       Ysdaux = movmean(sqrt(Ysd(1, :)), [6, 0]);      % Deviazione standard smoothed
-       fill([1:length(Yaux), fliplr(1:length(Yaux))], ...
-            [max(Yaux - 2 * Ysdaux, 0), fliplr(Yaux + 2 * Ysdaux)], ...
-            [1, 0.93, 0.93], 'EdgeColor', 'none', 'FaceAlpha', 0.5);
-       plot(Yaux, 'r-', 'LineWidth', 2);                          % Stima wastewater
+       plot(Yaux, plot_color, 'LineWidth', 2);                          % Stima wastewater
        plot(movmean(YC, [6, 0]), ':k', 'LineWidth', 2);           % Dati reali (smoothed)
        set(gca, 'FontSize', 14, 'Layer', 'top');
        xticks(firsts);
@@ -400,9 +354,6 @@ if pl
        else
            xlabel('Dates 2021–23', 'FontSize', 16);
        end
-       legend({'2SD envelope','Estimated from cases data', 'Cases data'}, ...
-           'Location', 'northeast', 'FontSize', 14);
-       
        if ~exist('img', 'dir')
            mkdir('img');
        end
@@ -410,22 +361,15 @@ if pl
        if ~exist(outputFolder, 'dir')
            mkdir(outputFolder);
        end
-       fileName = fullfile(outputFolder, ['img_casi_corr_casi_' regionName '.tex']);
+       fileName = fullfile(outputFolder, ['img_casi_corr_casi_sens_' regionName '.tex']);
        matlab2tikz(fileName, ...
            'showInfo', false);
 
-       figure('Position', [100, 200, 1200, 450]);
+       figure(figHandles(5));
         hold on; grid on;
         Ymean = (1e5 *Yest(2, :) + minYW).^(1 / params.WWexp);
         Ydata = (1e5 *YW(WWinds) + minYW).^(1 / params.WWexp);
-        Yhi =  1e5 *Yest(2, :) + minYW + 2 * 1e5 * sqrt(Ysd(2, :));
-        Ylo = max(1e5 *Yest(2, :) + minYW - 2 * 1e5 * sqrt(Ysd(2, :)), 0);
-        Yhi_transf = Yhi.^(1 / params.WWexp);
-        Ylo_transf = Ylo.^(1 / params.WWexp);
-        fill([1:length(Yest), fliplr(1:length(Yest))], ...
-             [Ylo_transf, fliplr(Yhi_transf)], ...
-             [1, 0.93, 0.93], 'EdgeColor', 'none', 'FaceAlpha', 0.5);
-        plot(movmean(Ymean, [6, 0]), '-r', 'LineWidth', 2);                      % Stima
+        plot(movmean(Ymean, [6, 0]), plot_color, 'LineWidth', 2);                      % Stima
         plot(WWinds, movmean(Ydata, [6, 0]), '--k', 'LineWidth', 2); % Dati osservati
         set(gca, 'FontSize', 14, 'Layer', 'top');
         xticks(firsts);
@@ -435,10 +379,7 @@ if pl
             xlabel('Dates 2020–2021', 'FontSize', 16);
         else
             xlabel('Dates 2021–2023', 'FontSize', 16);
-        end
-        legend({'2SD envelope','Estimated from cases data', 'WW data'}, ...
-            'Location', 'northeast', 'FontSize', 14);
-        
+        end 
         if ~exist('img', 'dir')
             mkdir('img');
         end
@@ -446,24 +387,15 @@ if pl
         if ~exist(outputFolder, 'dir')
             mkdir(outputFolder);
         end
-       fileName = fullfile(outputFolder, ['img_ww_corr_casi_' regionName '.tex']);
+       fileName = fullfile(outputFolder, ['img_ww_corr_casi_sens_' regionName '.tex']);
        matlab2tikz(fileName, ...
            'showInfo', false);
         
-        % Correlation between case numbers and reconstructed case numbers
-        CaseCorr = sum((YC-mean(YC)).*(Yest(1,:)-mean(Yest(1,:))))/norm(YC-mean(YC))/norm(Yest(1,:)-mean(Yest(1,:)))
-        
-        Ysm1 = movmean(YC,[6 0]);
-        Ysm2 = movmean(Yest(1,:),[6 0]);
-        
-        CaseCorrSm = sum((Ysm1-mean(Ysm1)).*(Ysm2-mean(Ysm2)))/norm(Ysm1-mean(Ysm1))/norm(Ysm2-mean(Ysm2))
-        
-
         % Creazione figura
-        figure('Position', [100, 200, 1200, 450]);
+        figure(figHandles(6));
         hold on; grid on;
         plot(cumsum(YC), 'k', 'LineWidth', 2);            % Dati reali
-        plot(cumsum(Yest(1, :)), 'r', 'LineWidth', 2);     % Stima da acque reflue
+        plot(cumsum(Yest(1, :)), plot_color, 'LineWidth', 2);     % Stima da acque reflue
         set(gca, 'FontSize', 14, 'Layer', 'top');
         xticks(firsts);
         xticklabels(labs);
@@ -473,8 +405,6 @@ if pl
         else
             xlabel('Dates 2021–23', 'FontSize', 16);
         end
-        legend({'Data', 'Estimated from cases data'}, 'Location', 'northwest', 'FontSize', 14);
-
         if ~exist('img', 'dir')
             mkdir('img');
         end
@@ -482,126 +412,11 @@ if pl
         if ~exist(outputFolder, 'dir')
             mkdir(outputFolder);
         end
-        fileName = fullfile(outputFolder, ['img_cumsum_casi_corr_casi_' regionName '.tex']);
+        fileName = fullfile(outputFolder, ['img_cumsum_casi_corr_casi_sens_' regionName '.tex']);
         matlab2tikz(fileName, ...
            'showInfo', false);
 
-        Yaux = (1e5*Yest(2,:)+minYW).^(1/params.WWexp);
-        WWaux = (1e5*YW(WWinds)+minYW).^(1/params.WWexp);
-        WWcorr = sum((Yaux(WWinds)-mean(Yaux(WWinds))).*(WWaux-mean(WWaux)))/norm((Yaux(WWinds)-mean(Yaux(WWinds))))/norm((WWaux-mean(WWaux)))
-
     end
-    
-    if useData(1) && useData(2)
-
-       figure('Position', [100, 200, 1200, 450]);
-       hold on; grid on;
-       Yaux = movmean(Yest(1, :), [6, 0]);             % Stima filtrata dei casi
-       Ysdaux = movmean(sqrt(Ysd(1, :)), [6, 0]);      % Deviazione standard smoothed
-       fill([1:length(Yaux), fliplr(1:length(Yaux))], ...
-            [max(Yaux - 2 * Ysdaux, 0), fliplr(Yaux + 2 * Ysdaux)], ...
-            [1, 0.93, 0.93], 'EdgeColor', 'none', 'FaceAlpha', 0.5);
-       plot(Yaux, 'r-', 'LineWidth', 2);                          % Stima wastewater
-       plot(movmean(YC, [6, 0]), ':k', 'LineWidth', 2);           % Dati reali (smoothed)
-       set(gca, 'FontSize', 14, 'Layer', 'top');
-       xticks(firsts);
-       xticklabels(labs);
-       ylabel('Daily new cases', 'FontSize', 16);
-       if any(strcmp(params.region, {'Luxembourg'}))
-           xlabel('Dates 2020–21', 'FontSize', 16);
-       else
-           xlabel('Dates 2021–23', 'FontSize', 16);
-       end
-       legend({'2SD envelope','Estimated from both data', 'Cases data'}, ...
-           'Location', 'northeast', 'FontSize', 14);
-       
-       if ~exist('img', 'dir')
-           mkdir('img');
-       end
-       outputFolder = fullfile('img', regionName);
-       if ~exist(outputFolder, 'dir')
-           mkdir(outputFolder);
-       end
-       fileName = fullfile(outputFolder, ['img_casi_corr_casi_' regionName '.tex']);
-       matlab2tikz(fileName, ...
-           'showInfo', false);
-
-       figure('Position', [100, 200, 1200, 450]);
-        hold on; grid on;
-        Ymean = (1e5 *Yest(2, :) + minYW).^(1 / params.WWexp);
-        Ydata = (1e5 *YW(WWinds) + minYW).^(1 / params.WWexp);
-        Yhi =  1e5 *Yest(2, :) + minYW + 2 * 1e5 * sqrt(Ysd(2, :));
-        Ylo = max(1e5 *Yest(2, :) + minYW - 2 * 1e5 * sqrt(Ysd(2, :)), 0);
-        Yhi_transf = Yhi.^(1 / params.WWexp);
-        Ylo_transf = Ylo.^(1 / params.WWexp);
-        fill([1:length(Yest), fliplr(1:length(Yest))], ...
-             [Ylo_transf, fliplr(Yhi_transf)], ...
-             [1, 0.93, 0.93], 'EdgeColor', 'none', 'FaceAlpha', 0.5);
-        plot(movmean(Ymean, [6, 0]), '-r', 'LineWidth', 2);                      % Stima
-        plot(WWinds, movmean(Ydata, [6, 0]), '--k', 'LineWidth', 2); % Dati osservati
-        set(gca, 'FontSize', 14, 'Layer', 'top');
-        xticks(firsts);
-        xticklabels(labs);
-        ylabel('NVL', 'FontSize', 16);
-        if any(strcmp(params.region, {'Luxembourg'}))
-            xlabel('Dates 2020–2021', 'FontSize', 16);
-        else
-            xlabel('Dates 2021–2023', 'FontSize', 16);
-        end
-        legend({'2SD envelope','Estimated from both data', 'WW data'}, ...
-            'Location', 'northeast', 'FontSize', 14);
-        
-        if ~exist('img', 'dir')
-            mkdir('img');
-        end
-        outputFolder = fullfile('img', regionName);
-        if ~exist(outputFolder, 'dir')
-            mkdir(outputFolder);
-        end
-       fileName = fullfile(outputFolder, ['img_ww_corr_casi_' regionName '.tex']);
-       matlab2tikz(fileName, ...
-           'showInfo', false);
-        
-        % Correlation between case numbers and reconstructed case numbers
-        CaseCorr = sum((YC-mean(YC)).*(Yest(1,:)-mean(Yest(1,:))))/norm(YC-mean(YC))/norm(Yest(1,:)-mean(Yest(1,:)))
-        
-        Ysm1 = movmean(YC,[6 0]);
-        Ysm2 = movmean(Yest(1,:),[6 0]);
-        
-        CaseCorrSm = sum((Ysm1-mean(Ysm1)).*(Ysm2-mean(Ysm2)))/norm(Ysm1-mean(Ysm1))/norm(Ysm2-mean(Ysm2))
-        
-
-        % Creazione figura
-        figure('Position', [100, 200, 1200, 450]);
-        hold on; grid on;
-        plot(cumsum(YC), 'k', 'LineWidth', 2);            % Dati reali
-        plot(cumsum(Yest(1, :)), 'r', 'LineWidth', 2);     % Stima da acque reflue
-        set(gca, 'FontSize', 14, 'Layer', 'top');
-        xticks(firsts);
-        xticklabels(labs);
-        ylabel('Cumulative cases', 'FontSize', 16);
-        if any(strcmp(params.region, {'Luxembourg'}))
-            xlabel('Dates 2020–21', 'FontSize', 16);
-        else
-            xlabel('Dates 2021–23', 'FontSize', 16);
-        end
-        legend({'Data', 'Estimated from both data'}, 'Location', 'northwest', 'FontSize', 14);
-
-        if ~exist('img', 'dir')
-            mkdir('img');
-        end
-        outputFolder = fullfile('img', regionName);
-        if ~exist(outputFolder, 'dir')
-            mkdir(outputFolder);
-        end
-        fileName = fullfile(outputFolder, ['img_cumsum_casi_corr_casi_' regionName '.tex']);
-        matlab2tikz(fileName, ...
-           'showInfo', false);
-
-        Yaux = (1e5*Yest(2,:)+minYW).^(1/params.WWexp);
-        WWaux = (1e5*YW(WWinds)+minYW).^(1/params.WWexp);
-        WWcorr = sum((Yaux(WWinds)-mean(Yaux(WWinds))).*(WWaux-mean(WWaux)))/norm((Yaux(WWinds)-mean(Yaux(WWinds))))/norm((WWaux-mean(WWaux)))
-
-    end
+            
 end
 
