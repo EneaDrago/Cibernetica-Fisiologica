@@ -6,23 +6,25 @@ basePath = getenv('USERPROFILE');
 addpath(genpath(fullfile(basePath, 'MATLAB', 'matlab2tikz')));
 
 % Choose if you want do the sensitivity analysis
-sensitivity_analysis = false;
+sensitivity_analysis = true;
+sens_analysis_R_matrix = true;
+sens_analysis_dark_number = false;
 
 % Choose which region you want study
 % regionName = 'Luxembourg';
-% regionName = 'wwtp1';
+regionName = 'wwtp1';
 % regionName = 'wwtp2';
 % regionName = 'wwtp3';
-regionName = 'wwtp4';
+% regionName = 'wwtp4';
 
 paramFile = fullfile('parameters', ['params_' regionName '.mat']);
 
 if sensitivity_analysis
-    select_dark_num(regionName)
+    select_dark_num(regionName,sens_analysis_R_matrix,sens_analysis_dark_number)
 end
 
 % Choose the dark number 
-new_dark_number = 1.3;
+new_dark_number = 1.5;
 
 if ~exist(paramFile, 'file') 
     latest_dark_number = new_dark_number;
@@ -63,8 +65,8 @@ params.RW = params.RW0/10;
 %
 %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% 
 
-RC_scale = 1e0;
-RW_scale = 1e0;
+RC_scale = 1e4;
+RW_scale = 1e-5;
 
 % %% Estimate the wastewater data using only the case data
 % [Yest_case, ~, ~, ReffCase, ~] = SEIR_WW(params,YC,YW,C,[true,true],1000,firsts,labs,true,regionName,RW_scale,RC_scale);

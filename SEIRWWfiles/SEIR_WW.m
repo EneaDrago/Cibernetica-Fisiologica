@@ -20,7 +20,7 @@ if length(maxind) == 1 && maxind > length(YC)
     maxind = length(YC);
 end
 
-% params.WWexp = 1;
+params.WWexp = 1;
 
 %Process the WW data
 WWinds = find(YW>-.5);
