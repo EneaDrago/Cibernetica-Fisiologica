@@ -6,7 +6,7 @@ basePath = getenv('USERPROFILE');
 addpath(genpath(fullfile(basePath, 'MATLAB', 'matlab2tikz')));
 
 % Choose if you want do the sensitivity analysis
-sensitivity_analysis = true;
+sensitivity_analysis = false;
 
 % Choose which analysis you want to do
 sens_analysis_R_matrix = true;
@@ -22,11 +22,23 @@ regionName = 'wwtp1';
 paramFile = fullfile('parameters', ['params_' regionName '.mat']);
 
 if sensitivity_analysis
-    select_dark_num(regionName,sens_analysis_R_matrix,sens_analysis_dark_number)
+    sens_analysis(regionName,sens_analysis_R_matrix,sens_analysis_dark_number)
 end
 
 % Choose the dark number 
-new_dark_number = 1.5;
+if regionName == 'wwtp1'
+    new_dark_number = 1.5;
+elseif regionName == 'wwtp2'
+    new_dark_number = 1.3;
+elseif regionName == 'wwtp3'
+    new_dark_number = 1.3;
+elseif regionName == 'wwtp4'
+    new_dark_number = 1.4;
+else
+    new_dark_number = 1.8;
+end
+
+
 
 if ~exist(paramFile, 'file') 
     latest_dark_number = new_dark_number;
@@ -67,14 +79,14 @@ params.RW = params.RW0/10;
 %
 %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% %% 
 
-RC_scale = 1e4;
-RW_scale = 1e-5;
+RC_scale = 1e0;
+RW_scale = 1e0;
 
 % %% Estimate the wastewater data using only the case data
-% [Yest_case, ~, ~, ReffCase, ~] = SEIR_WW(params,YC,YW,C,[true,true],1000,firsts,labs,true,regionName,RW_scale,RC_scale);
+[Yest_case, ~, ~, ReffCase, ~] = SEIR_WW(params,YC,YW,C,[true,true],1000,firsts,labs,true,regionName,RW_scale,RC_scale);
 % 
 % %% Estimate the case numbers using only the wastewater data
-% [Yest_ww, ~, ~, ReffWW, ~] = SEIR_WW(params,YC,YW,C,[false,true],1000,firsts,labs,true,regionName,RW_scale,RC_scale);
+[Yest_ww, ~, ~, ReffWW, ~] = SEIR_WW(params,YC,YW,C,[false,true],1000,firsts,labs,true,regionName,RW_scale,RC_scale);
 
 %% Estimate the case numbers using both data
 [Yest_both, ~, ~, Reff_both, ~] = SEIR_WW(params,YC,YW,C,[true,true],1000,firsts,labs,true,regionName,RW_scale,RC_scale);
@@ -123,19 +135,6 @@ params.RW = params.RW0/10;
 [~, XendC, PC] = SEIR_WW(params,YC,YW,C,dataToUse,predDay,firsts,labs,false,regionName);
 [Y0, err] = SEIR_WW_FWD(XendC,C,PC,predDay+1,params,numEstDays);
 Yc0 = cumsum([YC(1:predDay) Y0(1,:)]);
-% Xaux = XendC;
-% Xaux(7) = XendC(7) + PC(7,7).^.5;
-% Y1 = SEIR_WW_FWD(Xaux,C,PC,predDay+1,params,330);
-% Yc1 = cumsum([YC(1:predDay) Y1(1,:)]);
-% Xaux(7) = XendC(7) + 2*PC(7,7).^.5;
-% Y2 = SEIR_WW_FWD(Xaux,C,PC,predDay+1,params,330);
-% Yc2 = cumsum([YC(1:predDay) Y2(1,:)]);
-% Xaux(7) = XendC(7) - PC(7,7).^.5;
-% Ym1 = SEIR_WW_FWD(Xaux,C,PC,predDay+1,params,330);
-% Ycm1 = cumsum([YC(1:predDay) Ym1(1,:)]);
-% Xaux(7) = XendC(7) - 2*PC(7,7).^.5;
-% Ym2 = SEIR_WW_FWD(Xaux,C,PC,predDay+1,params,330);
-% Ycm2 = cumsum([YC(1:predDay) Ym2(1,:)]);
 
 %% Creazione della figure
 figure('Position',[100, 200, 1200, 450]); 

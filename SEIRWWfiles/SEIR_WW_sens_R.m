@@ -273,19 +273,15 @@ end
 Reff = X(7,2:end).*X(1,2:end)/N/tau;
 
 % Plot if requested
-if pl
+if pl && isreal(Yest) && all(Yest(:) > 0)
 
     figure(figHandles(1));
        hold on; grid on;
        Yaux = movmean(Yest(1, :), [6, 0]);             % Stima filtrata dei casi
-       Ysdaux = movmean(sqrt(Ysd(1, :)), [6, 0]);      % Deviazione standard smoothed
-       % fill([1:length(Yaux), fliplr(1:length(Yaux))], ...
-       %      [max(Yaux - 2 * Ysdaux, 0), fliplr(Yaux + 2 * Ysdaux)], ...
-       %      [1, 0.93, 0.93], 'EdgeColor', 'none', 'FaceAlpha', 0.5);
        if style == "dot"
            hEst1 = plot(Yaux,':', 'LineWidth', 2);
        else
-            hEst1 = plot(Yaux, 'LineWidth', 2);
+           hEst1 = plot(Yaux, 'LineWidth', 2);
        end
        plot(movmean(YC, [6, 0]), ':k', 'LineWidth', 2);           % Dati reali (smoothed)
        set(gca, 'FontSize', 14, 'Layer', 'top');
@@ -337,8 +333,6 @@ if pl
         else
             xlabel('Dates 2021–2023', 'FontSize', 16);
         end
-        
-        
         if ~exist('img', 'dir')
             mkdir('img');
         end
@@ -385,6 +379,15 @@ if pl
         labelLegend1 = labelLegend;
         labelLegend2 = labelLegend;
         labelLegend3 = labelLegend;
-            
+   
+
+else
+    hEst1 = plot(nan, nan, ':', 'LineWidth', 2);
+    hEst2 = plot(nan, nan, ':', 'LineWidth', 2);
+    hEst3 = plot(nan, nan, ':', 'LineWidth', 2);
+    labelLegend1 = '.';
+    labelLegend2 = '.';
+    labelLegend3 = '.';
+
 end
 

@@ -28,7 +28,7 @@ end
 %column contains the different ratios, and second column the start day of
 %the corresponding value (given as the number of the day counted from the
 %beginning of the data).
-params.darkNumber = [dark_number 1]; % 2.7
+params.darkNumber = [dark_number 1]; 
 
 %Indices of special holidays with reduced testing resulting in lower than
 %expected case numbers
