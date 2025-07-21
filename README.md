@@ -14,6 +14,7 @@ This project implements an extended **SEIR** epidemiological model using **waste
 ---
 
 ## 📁 Project Structure
+```
 .
 ├── .gitignore
 ├── A_data_correlation.m
@@ -53,7 +54,7 @@ This project implements an extended **SEIR** epidemiological model using **waste
     ├── SEIR_WW_sens_R.asv
     ├── SEIR_WW_sens_R.m
     └── WWinterpol.m
-
+```
 ---
 
 ## ▶️ How to Run the Project
