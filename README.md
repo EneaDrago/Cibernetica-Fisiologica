@@ -17,8 +17,6 @@ This project implements an extended **SEIR** epidemiological model using **waste
 ```
 .
 ├── .gitignore
-├── A_data_correlation.m
-├── A_plot_data.m
 ├── main.asv
 ├── main.m
 ├── README.md
@@ -31,6 +29,9 @@ This project implements an extended **SEIR** epidemiological model using **waste
 │   ├── wwtp2.xlsx
 │   ├── wwtp3.xlsx
 │   └── wwtp4.xlsx
+│
+├── img
+│   ├── ...
 │
 ├── parameters
 │   ├── .gitkeep
