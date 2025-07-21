@@ -42,7 +42,7 @@ new_dark_number = 1.5;                     % Value of the dark number to use
 
 ## 👥 Authors
 
-Enea Dragoni - GitHub: https://github.com/EneaDragoni
+Enea Dragoni - GitHub: https://github.com/EneaDrago
 Simone Cirelli - GitHub: https://github.com/Cirocirotondo
 Duccio Petreni - GitHub: https://github.com/ducciopet
 
