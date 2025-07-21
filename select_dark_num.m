@@ -243,12 +243,12 @@ if sens_analysis_R_matrix
     allHandles3 = gobjects(0); allLabels3 = {};
 
     RW_start = -3;
-    RW_inc = 2;
-    RW_end = 3;    
+    RW_inc = 3;
+    RW_end = 4;    
 
     RC_start = -3;
-    RC_inc = 2;
-    RC_end = 3;     
+    RC_inc = 3;
+    RC_end = 4;     
     
     for RW_scale = RW_start:RW_inc:RW_end
         for RC_scale = RC_start:RC_inc:RC_end
@@ -306,7 +306,12 @@ if sens_analysis_R_matrix
             [params,J] = SEIRWWcalibrate(YC_calibrate,YW_calibrate,C,params);
        
             params.RW = params.RW0/10;
-            [~, ~, ~, ~, ~, ~, h1, l1, h2, l2, h3, l3] = SEIR_WW_sens_R(params,YC,YW,C,[true,true],1000,firsts,labs,true,regionName, figHandles,10^RW_scale,10^RC_scale);
+            if RW_scale >= 1
+                [~, ~, ~, ~, ~, ~, h1, l1, h2, l2, h3, l3] = SEIR_WW_sens_R(params,YC,YW,C,[true,true],1000,firsts,labs,true,regionName, figHandles,10^RW_scale,10^RC_scale, "dot");
+            else
+                [~, ~, ~, ~, ~, ~, h1, l1, h2, l2, h3, l3] = SEIR_WW_sens_R(params,YC,YW,C,[true,true],1000,firsts,labs,true,regionName, figHandles,10^RW_scale,10^RC_scale, "line");
+
+            end
 
             allHandles1(end+1) = h1; allLabels1{end+1} = l1;
             allHandles2(end+1) = h2; allLabels2{end+1} = l2;
@@ -322,8 +327,47 @@ if sens_analysis_R_matrix
     legend(allHandles2, allLabels2, 'Location','northeast', 'FontSize', 14);
     
     figure(figHandles(3));
-    legend(allHandles3, allLabels3, 'Location','northwest', 'FontSize', 14);
+    legend(allHandles3, allLabels3, 'Location','best', 'FontSize', 14);
 
+    %% Graphs
+    % Save graph 1 (daily new cases)
+    figure(figHandles(1));
+    if ~exist('img', 'dir')
+        mkdir('img');
+    end
+    outputFolder = fullfile('img', regionName);
+    if ~exist(outputFolder, 'dir')
+        mkdir(outputFolder);
+    end
+    fileName = fullfile(outputFolder, ['img_sensR_casi_' regionName '.tex']);
+    matlab2tikz(fileName, ...
+        'showInfo', false);
+
+    % Save graph 2 (WW)
+    figure(figHandles(2));
+    if ~exist('img', 'dir')
+        mkdir('img');
+    end
+    outputFolder = fullfile('img', regionName);
+    if ~exist(outputFolder, 'dir')
+        mkdir(outputFolder);
+    end
+    fileName = fullfile(outputFolder, ['img_sensR_ww_' regionName '.tex']);
+    matlab2tikz(fileName, ...
+        'showInfo', false);
+
+    % Save graph 3 (WW)
+    figure(figHandles(3));
+    if ~exist('img', 'dir')
+        mkdir('img');
+    end
+    outputFolder = fullfile('img', regionName);
+    if ~exist(outputFolder, 'dir')
+        mkdir(outputFolder);
+    end
+    fileName = fullfile(outputFolder, ['img_sensR_cumsum_' regionName '.tex']);
+    matlab2tikz(fileName, ...
+        'showInfo', false);
 end
 
 

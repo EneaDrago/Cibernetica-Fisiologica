@@ -1,4 +1,4 @@
-function [Yest, Xend, P, Reff, errReff, Ysd, hEst1, labelLegend1, hEst2, labelLegend2, hEst3, labelLegend3] = SEIR_WW_sens_R(params,YC,YW,C,useData,maxind,firsts,labs,pl,regionName, figHandles,RW_scale,RC_scale)
+function [Yest, Xend, P, Reff, errReff, Ysd, hEst1, labelLegend1, hEst2, labelLegend2, hEst3, labelLegend3] = SEIR_WW_sens_R(params,YC,YW,C,useData,maxind,firsts,labs,pl,regionName, figHandles,RW_scale,RC_scale, style)
 
 % As SEIR_WW, use for sensitivity plot
 
@@ -279,10 +279,14 @@ if pl
        hold on; grid on;
        Yaux = movmean(Yest(1, :), [6, 0]);             % Stima filtrata dei casi
        Ysdaux = movmean(sqrt(Ysd(1, :)), [6, 0]);      % Deviazione standard smoothed
-       fill([1:length(Yaux), fliplr(1:length(Yaux))], ...
-            [max(Yaux - 2 * Ysdaux, 0), fliplr(Yaux + 2 * Ysdaux)], ...
-            [1, 0.93, 0.93], 'EdgeColor', 'none', 'FaceAlpha', 0.5);
-       hEst1 = plot(Yaux, 'LineWidth', 2);
+       % fill([1:length(Yaux), fliplr(1:length(Yaux))], ...
+       %      [max(Yaux - 2 * Ysdaux, 0), fliplr(Yaux + 2 * Ysdaux)], ...
+       %      [1, 0.93, 0.93], 'EdgeColor', 'none', 'FaceAlpha', 0.5);
+       if style == "dot"
+           hEst1 = plot(Yaux,':', 'LineWidth', 2);
+       else
+            hEst1 = plot(Yaux, 'LineWidth', 2);
+       end
        plot(movmean(YC, [6, 0]), ':k', 'LineWidth', 2);           % Dati reali (smoothed)
        set(gca, 'FontSize', 14, 'Layer', 'top');
        xticks(firsts);
@@ -317,7 +321,11 @@ if pl
         fill([1:length(Yest), fliplr(1:length(Yest))], ...
              [Ylo_transf, fliplr(Yhi_transf)], ...
              [1, 0.93, 0.93], 'EdgeColor', 'none', 'FaceAlpha', 0.5);
-        hEst2 = plot(movmean(Ymean, [6, 0]), 'LineWidth', 2);
+        if style == "dot"
+            hEst2 = plot(movmean(Ymean, [6, 0]), ':', 'LineWidth', 2);
+        else
+            hEst2 = plot(movmean(Ymean, [6, 0]), 'LineWidth', 2);
+        end
         plot(WWinds, movmean(Ydata, [6, 0]), '--k', 'LineWidth', 2); % Dati osservati
         
         set(gca, 'FontSize', 14, 'Layer', 'top');
@@ -346,7 +354,11 @@ if pl
         figure(figHandles(3));
         hold on; grid on;
         plot(cumsum(YC), 'k', 'LineWidth', 2);            % Dati reali
-        hEst3 = plot(cumsum(Yest(1, :)), 'LineWidth', 2);
+        if style == "dot"
+            hEst3 = plot(cumsum(Yest(1, :)), ':', 'LineWidth', 2);
+        else
+            hEst3 = plot(cumsum(Yest(1, :)), 'LineWidth', 2);
+        end
         set(gca, 'FontSize', 14, 'Layer', 'top');
         xticks(firsts);
         xticklabels(labs);
@@ -369,7 +381,7 @@ if pl
            'showInfo', false);
 
         %% --- Etichetta comune per tutte le curve stimate ---
-        labelLegend = sprintf('Scale Factor RW=%.2g, Scale Factor RC=%.2g', RW_scale, RC_scale);
+        labelLegend = sprintf('SF RW=%.2g, SF RC=%.2g', RW_scale, RC_scale);
         labelLegend1 = labelLegend;
         labelLegend2 = labelLegend;
         labelLegend3 = labelLegend;
