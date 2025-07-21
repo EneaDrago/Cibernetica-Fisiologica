@@ -35,13 +35,12 @@ Edit the `main.m` script to customize the analysis:
 ```matlab
 sensitivity_analysis = true;               % Enable/disable sensitivity analysis
 sens_analysis_R_matrix = true;             % Sensitivity w.r.t. observation covariance matrix R
-sens_analysis_dark_number = false;         % Sensitivity w.r.t. dark number (under-reporting factor)
+sens_analysis_dark_number = false;         % Sensitivity w.r.t. dark number 
 regionName = 'wwtp1';                      % Region to analyze
 new_dark_number = 1.5;                     % Value of the dark number to use
 ```
 
 ## 👥 Authors
-
 Enea Dragoni - GitHub: https://github.com/EneaDrago
 Simone Cirelli - GitHub: https://github.com/Cirocirotondo
 Duccio Petreni - GitHub: https://github.com/ducciopet
