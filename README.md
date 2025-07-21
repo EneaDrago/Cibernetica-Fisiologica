@@ -41,7 +41,8 @@ new_dark_number = 1.5;                     % Value of the dark number to use
 ```
 
 ## 👥 Authors
-Enea Dragoni - GitHub: [https://github.com/EneaDrago](https://github.com/EneaDrago)
-Simone Cirelli - GitHub: [https://github.com/Cirocirotondo](https://github.com/Cirocirotondo)
-Duccio Petreni - GitHub: [https://github.com/ducciopet](https://github.com/ducciopet)
 
+- Enea Dragoni - GitHub: [https://github.com/EneaDrago](https://github.com/EneaDrago) 
+- Simone Cirelli - GitHub: [https://github.com/Cirocirotondo](https://github.com/Cirocirotondo) 
+- Duccio Petreni - GitHub: [https://github.com/ducciopet](https://github.com/ducciopet) 
+ 
