@@ -76,8 +76,11 @@ sensitivity_analysis = true;               % Enable/disable sensitivity analysis
 sens_analysis_R_matrix = true;             % Sensitivity w.r.t. observation covariance matrix R
 sens_analysis_dark_number = false;         % Sensitivity w.r.t. dark number 
 regionName = 'wwtp1';                      % Region to analyze
-new_dark_number = 1.5;                     % Value of the dark number to use
 ```
+
+### 3. Run
+Simply run the main.m file.
+All necessary settings and configurations will be automatically adjusted based on the selected parameters.
 
 ## 👥 Authors
 
